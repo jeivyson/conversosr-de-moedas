@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor de Moeda</title>
+    <style>
+        /* Reset básico de estilos */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        .currency-converter {
+            background-color: #fff;
+            width: 350px;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+
+        input[type="number"] {
+            color: #333;
+            font-weight: bold;
+        }
+
+        button {
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #4cae4c;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .signature {
+            position: absolute;
+            bottom: 20px;
+            right: 30px;
+            font-size: 14px;
+            color: #888;
+        }
+
+        /* Estilos para dispositivos móveis */
+        @media (max-width: 400px) {
+            .currency-converter {
+                width: 100%;
+                padding: 20px;
+            }
+
+            button {
+                font-size: 16px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="currency-converter">
+        <h2>Conversor de Moeda</h2>
+        <input type="number" id="amount" placeholder="Digite o valor" />
+        <select id="fromCurrency">
+            <!-- Opções de moedas serão inseridas aqui dinamicamente -->
+        </select>
+        <select id="toCurrency">
+            <!-- Opções de moedas serão inseridas aqui dinamicamente -->
+        </select>
+        <button onclick="convertCurrency()">Converter</button>
+        <div id="result"></div>
+    </div>
+
+    <div class="signature">Desenvolvido por José Jeivyson</div>
+
+    <script>
+        // Função para preencher as opções de moeda nos selects
+        async function populateCurrencies() {
+            try {
+                const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                const data = await response.json();
+                const currencies = Object.keys(data.rates);
+                const fromCurrencySelect = document.getElementById('fromCurrency');
+                const toCurrencySelect = document.getElementById('toCurrency');
+                
+                currencies.forEach(currency => {
+                    const option = document.createElement('option');
+                    option.value = currency;
+                    option.textContent = currency;
+                    fromCurrencySelect.appendChild(option.cloneNode(true));
+                    toCurrencySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Erro ao carregar as moedas:", error);
+            }
+        }
+
+        // Função para realizar a conversão de moeda
+        async function convertCurrency() {
+            let amount = document.getElementById('amount').value;
+            let fromCurrency = document.getElementById('fromCurrency').value;
+            let toCurrency = document.getElementById('toCurrency').value;
+            let resultDiv = document.getElementById('result');
+
+            if (!amount || amount <= 0) {
+                resultDiv.textContent = "Por favor, insira um valor válido.";
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${fromCurrency}`);
+                const data = await response.json();
+                const conversionRate = data.rates[toCurrency];
+
+                if (conversionRate) {
+                    let convertedAmount = (amount * conversionRate).toFixed(2);
+                    resultDiv.textContent = `${amount} ${fromCurrency} = ${convertedAmount} ${toCurrency}`;
+                } else {
+                    resultDiv.textContent = "Erro ao obter a taxa de conversão.";
+                }
+            } catch (error) {
+                resultDiv.textContent = "Erro ao conectar à API.";
+            }
+        }
+
+        // Chama a função para preencher as moedas ao carregar a página
+        window.onload = populateCurrencies;
+    </script>
+</body>
+</html>
